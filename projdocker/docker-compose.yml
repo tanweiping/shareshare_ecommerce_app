@@ -1,0 +1,150 @@
+version: "3.8"
+
+volumes:
+  rabbitmq_data:
+
+services:
+  ###################################
+  # Account microservice
+  ###################################
+  account:
+    build:
+      context: ./
+      dockerfile: account.Dockerfile
+    image: minggg/account:esd
+    restart: always
+    environment:
+      dbURL: mysql+mysqlconnector://is213@host.docker.internal:3306/esd
+      PYTHONUNBUFFERED: 1
+    ports:
+      - "8000:8000"
+
+  #######################################################
+  # Listing microservice
+  #######################################################
+  listing:
+    build:
+      context: ./
+      dockerfile: listing.Dockerfile
+    image: minggg/listing:esd
+    restart: always
+    environment:
+      dbURL: mysql+mysqlconnector://is213@host.docker.internal:3306/esd
+      PYTHONUNBUFFERED: 1
+    ports:
+      - "5000:5000"
+  #######################################################
+  # Create_listing microservice
+  #######################################################
+  create_listing:
+    build:
+      context: ./
+      dockerfile: create_listing.Dockerfile
+    image: minggg/create_listing:esd
+    restart: always
+    depends_on:
+      - listing
+    environment:
+        account_URL: http://account:8000/graphql
+        listing_URL: http://listing:5000/listing
+        PYTHONUNBUFFERED: 1
+    ports:
+      - "5004:5004"
+  ####################################
+  # RabbitMQ: The messaging broker
+  ####################################
+  rabbitmq:
+    image: rabbitmq:3-management
+    hostname: esd-rabbit
+    restart: always
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
+  #######################################################
+  # Order microservice
+  #######################################################
+  order:
+    build:
+      context: ./
+      dockerfile: order.Dockerfile
+    image: minggg/order:esd
+    restart: always
+    environment:
+      dbURL: mysql+mysqlconnector://is213@host.docker.internal:3306/esd
+      PYTHONUNBUFFERED: 1
+
+  #################################################
+  # Activity Log: The Activity Log microservice
+  #################################################
+  activity_log:
+    build:
+      context: ./
+      dockerfile: activity_log.Dockerfile
+    image: minggg/activity_log:esd
+    restart: always
+    depends_on:
+      - rabbitmq
+    environment:
+      rabbit_host: rabbitmq
+      rabbit_port: 5672
+      dbURL: mysql+mysqlconnector://is213@host.docker.internal:3306/esd
+      PYTHONUNBUFFERED: 1
+
+  ###################################
+  # Error: The Error microservice
+  ###################################
+  error:
+    build:
+      context: ./
+      dockerfile: error.Dockerfile
+    image: minggg/error:esd
+    restart: always
+    depends_on:
+      - rabbitmq
+    environment:
+      rabbit_host: rabbitmq
+      rabbit_port: 5672
+      dbURL: mysql+mysqlconnector://is213@host.docker.internal:3306/esd
+      PYTHONUNBUFFERED: 1
+
+  ###################################
+  # Notification microservice
+  ###################################
+  notification:
+    build:
+      context: ./
+      dockerfile: notification.Dockerfile
+    image: minggg/notification:esd
+    restart: always
+    depends_on:
+      - rabbitmq
+    environment:
+      rabbit_host: rabbitmq
+      rabbit_port: 5672
+      PYTHONUNBUFFERED: 1
+
+  #######################################################
+  # Place_order microservice
+  #######################################################
+  place_order:
+    build:
+      context: ./
+      dockerfile: place_order.Dockerfile
+    image: minggg/place_order:esd
+    restart: always
+    depends_on:
+      - order
+      - activity_log
+      - error
+      - rabbitmq
+#      - notification
+    environment:
+      rabbit_host: rabbitmq
+      rabbit_port: 5672
+      order_URL: http://order:5005/order
+      PYTHONUNBUFFERED: 1
+    ports:
+      - "5009:5009"

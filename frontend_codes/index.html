@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<script src='https://kit.fontawesome.com/a076d05399.js' crossorigin='anonymous'></script>
+	<!-- SITE TITTLE -->
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Share Share</title>
+	<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+	<!-- FAVICON -->
+	<link href="images/favicon.png" rel="shortcut icon">
+	<!-- PLUGINS CSS STYLE -->
+	<!-- <link href="plugins/jquery-ui/jquery-ui.min.css" rel="stylesheet"> -->
+	<!-- Bootstrap -->
+	<link rel="stylesheet" href="plugins/bootstrap/css/bootstrap.min.css">
+	<link rel="stylesheet" href="plugins/bootstrap/css/bootstrap-slider.css">
+	<!-- Font Awesome -->
+	<link href="plugins/font-awesome/css/font-awesome.min.css" rel="stylesheet">
+	<!-- Owl Carousel -->
+	<link href="plugins/slick-carousel/slick/slick.css" rel="stylesheet">
+	<link href="plugins/slick-carousel/slick/slick-theme.css" rel="stylesheet">
+	<!-- Fancy Box -->
+	<link href="plugins/fancybox/jquery.fancybox.pack.css" rel="stylesheet">
+	<link href="plugins/jquery-nice-select/css/nice-select.css" rel="stylesheet">
+	<!-- CUSTOM CSS -->
+	<link href="css/style.css" rel="stylesheet">
+	<!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+	<!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+	<!--[if lt IE 9]>
+	<script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+	<script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+	<![endif]-->
+</head>
+<body class="body-wrapper">
+	<script type="text/javascript">
+		if (!sessionStorage.getItem("jwt")) {
+			window.location.replace("signup.html");
+		}
+	</script>
+<section>
+	<div class="container">
+		<div class="row">
+			<div class="col-md-12">
+				<nav class="navbar navbar-expand-lg navbar-light navigation">
+					<a class="navbar-brand" href="index.html">
+						<img src="SS logo.PNG" alt="logo" width="100px" height="70px" style = "position:relative; left:5px; top:-3px;">
+					</a>
+					<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+					 aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+						<span class="navbar-toggler-icon"></span>
+					</button>
+					<div class="collapse navbar-collapse" id="navbarSupportedContent">
+						<ul class="navbar-nav ml-auto main-nav ">
+							<li class="nav-item active">
+								<a class="nav-link" href="index.html">Home</a>
+							</li>
+							<li class="nav-item dropdown dropdown-slide">
+								<a class="nav-link dropdown-toggle" href="profile.html">View My Listings<span></span>
+								</a>
+							</li>
+							<li class="nav-item dropdown dropdown-slide">
+								<a class="nav-link dropdown-toggle" href="category.html"  aria-haspopup="true" aria-expanded="false">
+									View All Listings <span></span>
+								</a>
+							</li>
+							<li class="nav-item dropdown dropdown-slide">
+								<a class="nav-link dropdown-toggle" href="post_listing.html"  aria-haspopup="true" aria-expanded="false">
+									Add Listing<span></span>
+								</a>
+							</li>
+						</ul>
+						<ul class="navbar-nav ml-auto mt-10">
+							<li class="nav-item">
+								<div class="dropdown">
+									<img src="profilepic.png" width="35px;">
+									<span style="font-weight:bold;padding-top:10px;padding-left:10px;" id="greeting"></span>
+									<div class="dropdown-content">
+										<a href="profile.html">Profile</a>
+									  	<a style="color:red;" onclick="signout()">Log Out</a>
+									</div>
+								</div>
+								<script type="text/javascript">
+									let name = sessionStorage.getItem("uname");
+									document.getElementById("greeting").innerHTML = name;
+								</script>
+							</li>
+						</ul>
+					</div>
+				</nav>
+			</div>
+		</div>
+	</div>
+</section>
+
+<section class="hero-area bg-1 text-center overly">
+	<!-- Container Start -->
+	<div class="container">
+		<div class="row">
+			<div class="col-md-12">
+				<!-- Header Contetnt -->
+				<div class="content-block">
+					<h1>Post / Join Share Share <br> Deals Near You </h1>
+					<p>Join the millions who buy with each other <br> to save money and reduce hassle.<br>Also do your part to reduce wastage.</p>
+					<div class="short-popular-category-list text-center">
+						<h2>Popular Category</h2>
+						<ul class="list-inline">
+							<li class="list-inline-item">
+								<a href="category.html">E-commerce</a></li>
+							<li class="list-inline-item">
+								<a href="category.html">Food Delivery</a>
+							</li>
+							<li class="list-inline-item">
+								<a href="category.html">Daily Needs
+								</a>
+							</li>
+						</ul>
+					</div>
+
+				</div>
+				<!-- Advance Search -->
+				<div class="advance-search">
+					<div class="container">
+						<div class="row justify-content-center">
+							<div class="col-lg-12 col-md-12 align-content-center">
+								<form>
+									<div class="form-row">
+										<div class="form-group col-md-4">
+											<input type="text" class="form-control my-2 my-lg-1" id="searchq" placeholder="What are you looking for">
+										</div>
+										<div class="form-group col-md-3">
+											<select class="w-100 form-control mt-lg-1 mt-md-2">
+												<option>Category</option>
+												<option value="1">E-commerce</option>
+												<option value="2">Food Delivery</option>
+												<option value="4">Daily Needs</option>
+											</select>
+										</div>
+										<div class="form-group col-md-3">
+											<input type="text" class="form-control my-2 my-lg-1" id="inputLocation4" placeholder="Location">												</div>
+											<div class="form-group col-md-2 align-self-center">
+											<button type="submit" hidden>Search Now</button>
+											<button type="button" onclick="dosearch()" name="button" class="btn btn-outline-primary">Search Now</button>
+										</div>
+									</div>
+								</form>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</section>
+<script type="text/javascript">
+	function trunc(text, length) {
+		if (text.length <= length) {
+		  return text;
+		}
+		return text.substr(0, length) + '\u2026'
+	}
+	function dosearch() {
+		let searchquery = document.getElementById("searchq").value;
+		let url = "http://localhost:5000/listing/productname/" + searchquery;
+		axios.get(url)
+		.then(response => {
+			let data = response.data.data;
+			listing = "";
+			for (let i = 0; i < data.length; i++) {
+				if (!data[i].availability) {
+					continue;
+				}
+				if (i == 3) {
+					break;
+				}
+				desc = trunc(data[i].description, 128);
+				goalstr = "";
+				if (data[i].unit != "piece") {
+					goalstr = "$ " + data[i].currqty + " / " + data[i].quantity;
+				}
+				else {
+					goalstr = data[i].currqty + " / " + data[i].quantity;
+				}
+				listing += `
+				<div class="col-sm-12 col-lg-4">
+					<div class="fancy product-item bg-light" style="box-shadow: 0px 6px 6px 0px rgba(0,0,0,0.4);">
+						<div class="card">
+							<div class="card-body">
+								<div style="text-align:center">
+									<img class="rounded-circle img-fluid mb-5 px-5" src="${data[i].image}">
+								</div>
+								<br>
+								<h4 class="card-title"><a href="single.html?lid=${data[i].listing_id}">${data[i].productName}</a></h4>
+								<ul class="list-inline product-meta">
+									<li class="list-inline-item">
+										<a href="single.html"><i class="fa fa-folder-open-o"></i>${data[i].category}</a>
+									</li>
+									<li class="list-inline-item">
+										<a href="#"><i class="fa fa-calendar"></i>${data[i].startTime}</a>
+									</li>
+								</ul>
+								<p class="card-text">${desc}</p>
+								<div class="goal">
+									${goalstr} reached
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>`
+			}
+			document.getElementById("trending-ads").innerHTML = listing;
+		})
+		.catch(error => {
+			alert("An error occurred!!! \n" + error);
+		});
+	}
+</script>
+<!--===========================================
+=            Popular deals section            =
+============================================-->
+<section class="popular-deals section bg-gray">
+	<div class="container">
+		<div class="row">
+			<div class="col-md-12">
+				<div class="section-title">
+					<h2>Top Trending Listings</h2>
+					<p>No more minimum spent that stops you. Buy whatever you want with Share Share. </p>
+				</div>
+			</div>
+		</div>
+		<div class="row" id="trending-ads">
+			<script type="text/javascript">
+				function trunc(text, length) {
+					if (text.length <= length) {
+				      return text;
+				    }
+				    return text.substr(0, length) + '\u2026'
+				}
+				let url = "http://localhost:5000/listing";
+				axios.get(url)
+				.then(response => {
+					let data = response.data.data;
+					listing = "";
+					for (let i = 0; i < data.length; i++) {
+						if (!data[i].availability) {
+							continue;
+						}
+						if (i == 3) {
+							break;
+						}
+						desc = trunc(data[i].description, 128);
+						goalstr = "";
+						if (data[i].unit != "piece") {
+							goalstr = "$ " + data[i].currqty + " / " + data[i].quantity;
+						}
+						else {
+							goalstr = data[i].currqty + " / " + data[i].quantity;
+						}
+						listing += `
+						<div class="col-sm-12 col-lg-4">
+							<div class="fancy product-item bg-light" style="box-shadow: 0px 6px 6px 0px rgba(0,0,0,0.4);">
+								<div class="card">
+									<div class="card-body">
+										<div style="text-align:center">
+											<img class="rounded-circle img-fluid mb-5 px-5" src="${data[i].image}">
+										</div>
+										<br>
+										<h4 class="card-title"><a href="single.html?lid=${data[i].listing_id}">${data[i].productName}</a></h4>
+										<ul class="list-inline product-meta">
+											<li class="list-inline-item">
+												<a href="single.html"><i class="fa fa-folder-open-o"></i>${data[i].category}</a>
+											</li>
+											<li class="list-inline-item">
+												<a href="#"><i class="fa fa-calendar"></i>${data[i].startTime}</a>
+											</li>
+										</ul>
+										<p class="card-text">${desc}</p>
+										<div class="goal">
+											${goalstr} reached
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>`
+					}
+					document.getElementById("trending-ads").innerHTML = listing;
+				})
+				.catch(error => {
+					alert("An error occurred!!! \n" + error);
+				});
+			</script>
+		</div>
+	</div>
+</section>
+
+<!--====================================
+=            Call to Action            =
+=====================================-->
+<section class="call-to-action overly bg-3 section-sm">
+	<!-- Container Start -->
+	<div class="container">
+		<div class="row justify-content-md-center text-center">
+			<div class="col-md-8">
+				<div class="content-holder">
+					<h2>Start today to Share Share</h2>
+					<ul class="list-inline mt-30">
+						<li class="list-inline-item"><a class="btn btn-primary" href="post_listing.html">Add Listing</a></li>
+						<li class="list-inline-item"><a class="btn btn-secondary" href="category.html">Browse Listings</a></li>
+					</ul>
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- Container End -->
+</section>
+
+<!-- Footer Bottom -->
+<footer class="footer-bottom">
+  <!-- Container Start -->
+  <div class="container">
+    <div class="row">
+      <div class="col-sm-6 col-12">
+        <!-- Copyright -->
+        <div class="copyright">
+          <p>Copyright © <script>
+              var CurrentYear = new Date().getFullYear()
+              document.write(CurrentYear)
+            </script>. All Rights Reserved</a></p>
+        </div>
+      </div>
+
+  <!-- To Top -->
+  <div class="top-to">
+    <a id="top" class="" href="#"><i class="fa fa-angle-up"></i></a>
+  </div>
+</footer>
+
+<!-- JAVASCRIPTS -->
+<script src="plugins/jQuery/jquery.min.js"></script>
+<script src="plugins/bootstrap/js/popper.min.js"></script>
+<script src="plugins/bootstrap/js/bootstrap.min.js"></script>
+<script src="plugins/bootstrap/js/bootstrap-slider.js"></script>
+  <!-- tether js -->
+<script src="plugins/tether/js/tether.min.js"></script>
+<script src="plugins/raty/jquery.raty-fa.js"></script>
+<script src="plugins/slick-carousel/slick/slick.min.js"></script>
+<script src="plugins/jquery-nice-select/js/jquery.nice-select.min.js"></script>
+<script src="plugins/fancybox/jquery.fancybox.pack.js"></script>
+<script src="plugins/smoothscroll/SmoothScroll.min.js"></script>
+<!-- google map -->
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCcABaamniA6OL5YvYSpB3pFMNrXwXnLwU&libraries=places"></script>
+<script src="plugins/google-map/gmap.js"></script>
+<script src="js/script.js"></script>
+<script type="text/javascript">
+	function signout() {
+		sessionStorage.removeItem("uname");
+		sessionStorage.removeItem("jwt");
+		window.location.replace("signup.html");
+	}
+</script>
+
+</body>
+
+</html>

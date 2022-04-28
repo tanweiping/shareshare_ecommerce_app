@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<style>
+table {
+table-layout: fixed ;
+width: 100% ;
+}
+td {
+width: 25% ;
+}
+</style>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Share Share</title>
+
+    <link href="images/favicon.png" rel="shortcut icon">
+    <!-- PLUGINS CSS STYLE -->
+    <!-- <link href="plugins/jquery-ui/jquery-ui.min.css" rel="stylesheet"> -->
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="plugins/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="plugins/bootstrap/css/bootstrap-slider.css">
+    <!-- Font Awesome -->
+    <link href="plugins/font-awesome/css/font-awesome.min.css" rel="stylesheet">
+    <!-- Owl Carousel -->
+    <link href="plugins/slick-carousel/slick/slick.css" rel="stylesheet">
+    <link href="plugins/slick-carousel/slick/slick-theme.css" rel="stylesheet">
+    <!-- Fancy Box -->
+    <link href="plugins/fancybox/jquery.fancybox.pack.css" rel="stylesheet">
+    <link href="plugins/jquery-nice-select/css/nice-select.css" rel="stylesheet">
+    <!-- CUSTOM CSS -->
+    <link href="css/style.css" rel="stylesheet">
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+    <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+</head>
+<body class="body-wrapper">
+    <script type="text/javascript">
+		if (!sessionStorage.getItem("jwt")) {
+			window.location.replace("signup.html");
+		}
+
+        function signout() {
+    		sessionStorage.removeItem("uname");
+    		sessionStorage.removeItem("jwt");
+    		window.location.replace("signup.html");
+    	}
+	</script>
+<section>
+	<div class="container">
+		<div class="row">
+			<div class="col-md-12">
+				<nav class="navbar navbar-expand-lg navbar-light navigation">
+					<a class="navbar-brand" href="index.html">
+						<img src="SS logo.PNG" alt="logo" width="100px" height="70px" style = "position:relative; left:5px; top:-3px;">
+					</a>
+					<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+					 aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+						<span class="navbar-toggler-icon"></span>
+					</button>
+					<div class="collapse navbar-collapse" id="navbarSupportedContent">
+						<ul class="navbar-nav ml-auto main-nav ">
+							<li class="nav-item active">
+								<a class="nav-link" href="index.html">Home</a>
+							</li>
+							<li class="nav-item dropdown dropdown-slide">
+								<a class="nav-link dropdown-toggle" href="profile.html">View My Listings<span></span>
+								</a>
+							</li>
+							<li class="nav-item dropdown dropdown-slide">
+								<a class="nav-link dropdown-toggle" href="category.html"  aria-haspopup="true" aria-expanded="false">
+									View All Listings <span></span>
+								</a>
+							</li>
+							<li class="nav-item dropdown dropdown-slide">
+								<a class="nav-link dropdown-toggle" href="post_listing.html"  aria-haspopup="true" aria-expanded="false">
+									Add Listing<span></span>
+								</a>
+							</li>
+						</ul>
+						<ul class="navbar-nav ml-auto mt-10">
+							<li class="nav-item">
+								<div class="dropdown">
+									<img src="profilepic.png" width="35px;">
+									<span style="font-weight:bold;padding-top:10px;padding-left:10px;" id="greeting"></span>
+									<div class="dropdown-content">
+										<a href="profile.html">Profile</a>
+									  	<a style="color:red;" onclick="signout()">Log Out</a>
+									</div>
+								</div>
+								<script type="text/javascript">
+									let name = sessionStorage.getItem("uname");
+									document.getElementById("greeting").innerHTML = name;
+								</script>
+							</li>
+						</ul>
+					</div>
+				</nav>
+			</div>
+		</div>
+	</div>
+</section>
+<section class="page-search">
+    <h1 style="color:white;text-align:center;">Your Profile</h1>
+</section>
+
+<div class="container">
+    <div class="row">
+        <div class="col-6 mx-auto my-5" style="box-shadow: 0px 6px 12px 0px rgba(0,0,0,0.7);border-radius:10px;text-align:center;"><br><br>
+            <img class="rounded-circle img-fluid mb-5 px-5" src="profilepic.png" style="width:60%;">
+            <h1 id="name"></h1>
+            <p id="email"></p><br>
+            <h3>Following: </h3>
+            <div id="followers">
+            </div>
+            <hr><br>
+            <h3>Your Posts:</h3>
+            <div id="postings">
+            </div>
+            <script type="text/javascript">
+                document.getElementById("name").innerHTML = sessionStorage.getItem("uname");
+                let jwt = sessionStorage.getItem("jwt");
+                payload = JSON.parse(atob(jwt.split('.')[1]));
+                document.getElementById("email").innerHTML = "Email: " + payload['sub'];
+                let url = "http://127.0.0.1:8000/graphql";
+                let gql = `query {user(em: \"${payload['sub']}\") {fullname, email, followers {followfullname, followemail}}}`;
+                axios.post(url, {
+                    query: gql
+                })
+                .then(response => {
+                    let data = response.data.data.user.followers;
+                    finalstr = "";
+                    for (let i = 0; i < data.length; i++) {
+                        finalstr += `<p>${data[i].followfullname}</p>`;
+                    }
+                    document.getElementById("followers").innerHTML = finalstr;
+                })
+                .catch(error => {
+                    alert("An error occurred!!! \n" + error);
+                });
+            </script>
+            <script type="text/javascript">
+                function trunc(text, length) {
+                    if (text.length <= length) {
+                      return text;
+                    }
+                    return text.substr(0, length) + '\u2026'
+                }
+
+                url = "http://127.0.0.1:5000/listing/findbyname/" + sessionStorage.getItem("uname");
+                axios.get(url)
+                .then(response => {
+                    let data = response.data;
+                    if (data.code == 200) {
+                        let finalstr = "";
+                        for (let i = 0; i < data.data.length; i++) {
+                            let desc = trunc(data.data[i].description, 25);
+                            finalstr += `<p>${i+1}. ${desc} <a href=\"edit_listing.html?lid=${data.data[i].listing_id}\">&nbsp;&nbsp;<button class=\'btn-sm btn-outline-secondary\'>EDIT</button></a></p>`;
+                        }
+                        document.getElementById("postings").innerHTML = finalstr;
+                    }
+
+                })
+                .catch(error => {
+                });
+            </script>
+        </div>
+    </div>
+</div>
+<!-- Footer Bottom -->
+<footer class="footer-bottom">
+	<!-- Container Start -->
+	<div class="container">
+	  <div class="row">
+		<div class="col-sm-6 col-12">
+		  <!-- Copyright -->
+		  <div class="copyright">
+			<p>Copyright © <script>
+				var CurrentYear = new Date().getFullYear()
+				document.write(CurrentYear)
+			  </script>. All Rights Reserved</a></p>
+		  </div>
+		</div>
+
+  <!-- To Top -->
+  <div class="top-to">
+    <a id="top" class="" href="#"><i class="fa fa-angle-up"></i></a>
+  </div>
+</footer>
+
+<!-- JAVASCRIPTS -->
+<script src="plugins/jQuery/jquery.min.js"></script>
+<script src="plugins/bootstrap/js/popper.min.js"></script>
+<script src="plugins/bootstrap/js/bootstrap.min.js"></script>
+<script src="plugins/bootstrap/js/bootstrap-slider.js"></script>
+</body>
+</html>

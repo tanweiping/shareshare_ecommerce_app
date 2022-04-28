@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Share Share</title>
+    <!-- FAVICON -->
+    <link href="images/favicon.png" rel="shortcut icon">
+    <!-- PLUGINS CSS STYLE -->
+    <!-- <link href="plugins/jquery-ui/jquery-ui.min.css" rel="stylesheet"> -->
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="plugins/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="plugins/bootstrap/css/bootstrap-slider.css">
+    <!-- Font Awesome -->
+    <link href="plugins/font-awesome/css/font-awesome.min.css" rel="stylesheet">
+    <!-- Owl Carousel -->
+    <link href="plugins/slick-carousel/slick/slick.css" rel="stylesheet">
+    <link href="plugins/slick-carousel/slick/slick-theme.css" rel="stylesheet">
+    <!-- Fancy Box -->
+    <link href="plugins/fancybox/jquery.fancybox.pack.css" rel="stylesheet">
+    <link href="plugins/jquery-nice-select/css/nice-select.css" rel="stylesheet">
+    <!-- CUSTOM CSS -->
+    <link href="css/style.css" rel="stylesheet">
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+
+  <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+  <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+  <!--[if lt IE 9]>
+  <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+  <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+  <![endif]-->
+</head>
+
+<body class="body-wrapper">
+    <script>
+    /*Define the version of the Google Pay API referenced when creating your configuration*/
+    const baseRequest = {
+        apiVersion: 2,
+        apiVersionMinor: 0
+    };
+  /*Card networks supported by your site and your gateway, @todo confirm card networks supported by your site and gateway */
+    const allowedCardNetworks = ["AMEX", "DISCOVER", "INTERAC", "JCB", "MASTERCARD", "MIR", "VISA"];
+    /*
+    * Card authentication methods supported by your site and your gateway
+    * @todo confirm your processor supports Android device tokens for your supported card networks */
+    const allowedCardAuthMethods = ["PAN_ONLY", "CRYPTOGRAM_3DS"];
+    /*
+    * Identify your gateway and your site's gateway merchant identified
+    * The Google Pay API response will return an encrypted payment method capable
+    * of being charged by a supported gateway after payer authorization
+    * @todo check with your gateway on the parameters to pass*/
+    const tokenizationSpecification = {
+        type: 'PAYMENT_GATEWAY',
+        parameters: {
+            'gateway': 'example',
+            'gatewayMerchantId': 'exampleGatewayMerchantId'
+        }
+    };
+    /* Describe your site's support for the CARD payment method and its required fields*/
+    const baseCardPaymentMethod = {
+        type: 'CARD',
+        parameters: {
+            allowedAuthMethods: allowedCardAuthMethods,
+            allowedCardNetworks: allowedCardNetworks
+        }
+    };
+    /* Describe your site's support for the CARD payment method including optional fields */
+    const cardPaymentMethod = Object.assign({}, baseCardPaymentMethod, {tokenizationSpecification: tokenizationSpecification});
+    /* An initialized google.payments.api.PaymentsClient object or null if not yet set */
+    let paymentsClient = null;
+    /**
+    * Configure your site's support for payment methods supported by the Google Pay API.
+    * Each member of allowedPaymentMethods should contain only the required fields,
+    * allowing reuse of this base request when determining a viewer's ability
+    * to pay and later requesting a supported payment method
+    * @returns {object} Google Pay API version, payment methods supported by the site
+    */
+    function getGoogleIsReadyToPayRequest() {
+        return Object.assign(
+            {},
+            baseRequest,
+            {
+                allowedPaymentMethods: [baseCardPaymentMethod]
+            }
+        );
+    }
+    /* Configure support for the Google Pay API, @returns {object} PaymentDataRequest fields */
+    function getGooglePaymentDataRequest() {
+        const paymentDataRequest = Object.assign({}, baseRequest);
+        paymentDataRequest.allowedPaymentMethods = [cardPaymentMethod];
+        paymentDataRequest.transactionInfo = getGoogleTransactionInfo();
+        paymentDataRequest.merchantInfo = {
+            // @todo a merchant ID is available for a production environment after approval by Google
+            // merchantId: '12345678901234567890',
+            merchantName: 'Example Merchant'
+        };
+        return paymentDataRequest;
+    }
+    /* Return an active PaymentsClient or initialize @returns {google.payments.api.PaymentsClient} Google Pay API client */
+    function getGooglePaymentsClient() {
+        if (paymentsClient === null) {
+            paymentsClient = new google.payments.api.PaymentsClient({environment: 'TEST'});
+        }
+        return paymentsClient;
+    }
+    /**
+    * Initialize Google PaymentsClient after Google-hosted JavaScript has loaded
+    * Display a Google Pay payment button after confirmation of the viewer's ability to pay.*/
+    function onGooglePayLoaded() {
+        const paymentsClient = getGooglePaymentsClient();
+        paymentsClient.isReadyToPay(getGoogleIsReadyToPayRequest())
+        .then(function(response) {
+            if (response.result) {
+                addGooglePayButton();
+                // @todo prefetch payment data to improve performance after confirming site functionality
+                // prefetchGooglePaymentData();
+            }
+        })
+        .catch(function(err) {
+            // show error in developer console for debugging
+            console.error(err);
+        });
+    }
+    /*Add a Google Pay purchase button alongside an existing checkout button*/
+    function addGooglePayButton() {
+        const paymentsClient = getGooglePaymentsClient();
+        const button = paymentsClient.createButton({
+            onClick: onGooglePaymentButtonClicked,
+            allowedPaymentMethods: [baseCardPaymentMethod],
+            buttonColor: 'black',
+            buttonType: 'order',
+            buttonLocale: 'en'
+        });
+        document.getElementById('google_button').appendChild(button);
+    }
+    /* Provide Google Pay API with a payment amount, currency, and amount status
+    * @returns {object} transaction info, suitable for use as transactionInfo property of PaymentDataRequest*/
+    function getGoogleTransactionInfo() {
+        return {
+            countryCode: 'US',
+            currencyCode: 'USD',
+            totalPriceStatus: 'FINAL',
+            totalPrice: '1.00'
+        };
+    }
+    /*Prefetch payment data to improve performance*/
+    function prefetchGooglePaymentData() {
+        const paymentDataRequest = getGooglePaymentDataRequest();
+        // transactionInfo must be set but does not affect cache
+        paymentDataRequest.transactionInfo = {
+            totalPriceStatus: 'NOT_CURRENTLY_KNOWN',
+            currencyCode: 'USD'
+        };
+        const paymentsClient = getGooglePaymentsClient();
+        paymentsClient.prefetchPaymentData(paymentDataRequest);
+    }
+    /* Show Google Pay payment sheet when Google Pay payment button is clicked */
+    function onGooglePaymentButtonClicked() {
+        const paymentDataRequest = getGooglePaymentDataRequest();
+        paymentDataRequest.transactionInfo = getGoogleTransactionInfo();
+
+        const paymentsClient = getGooglePaymentsClient();
+        paymentsClient.loadPaymentData(paymentDataRequest)
+        .then(function(paymentData) {
+            // handle the response
+            processPayment(paymentData);
+        })
+        .catch(function(err) {
+            // show error in developer console for debugging
+            console.error(err);
+        });
+    }
+    /* Process payment data returned by Google Pay API, @param {object} paymentData response from Google Pay API after user approves payment*/
+    function processPayment(paymentData) {
+        console.log(paymentData);
+        // @todo pass payment token to your gateway to process payment
+        let paymentToken = paymentData.paymentMethodData.tokenizationData.token;
+        let jwt_token = sessionStorage.getItem("jwt");
+        let selleremail = document.getElementById('selleremail').innerText;
+        let payload = JSON.parse(atob(jwt_token.split('.')[1]));
+        let myemail = payload['sub'];
+        let queryDict = {};
+        location.search.substr(1).split("&").forEach(function(item) {queryDict[item.split("=")[0]] = item.split("=")[1]});
+        let lid = queryDict['lid'];
+        let buyqty = queryDict['qty'];
+        let mycontact = document.getElementById("phone").value;
+        let price = document.getElementById("price").innerText;
+
+        let url = "http://localhost:5009/place_order";
+        axios.post(url, {
+            "paymentToken": paymentToken,
+            "selleremail": selleremail,
+            "buyeremail": myemail,
+            "buyqty": buyqty,
+            "price": price,
+            "buyerphone": mycontact,
+            "listing_id": lid,
+            "jwt_token": jwt_token,
+            "googlepay": true
+        })
+        .then(response => {
+            let data = response.data;
+            if (data.code == 200) {
+                alert("successful!, redirecting to Home page");
+                window.location.replace("index.html");
+            }
+            else {
+                alert("An error occurred!!! \n" + data.message);
+            }
+
+        })
+        .catch(error => {
+            alert("An error occurred!!! \n" + error);
+        });
+
+    }</script>
+    <script async src="https://pay.google.com/gp/p/js/pay.js" onload="onGooglePayLoaded()"></script>
+
+<script type="text/javascript">
+    if (!sessionStorage.getItem("jwt")) {
+        window.location.replace("signup.html");
+    }
+
+    function signout() {
+        sessionStorage.removeItem("uname");
+        sessionStorage.removeItem("jwt");
+        window.location.replace("signup.html");
+    }
+</script>
+<section>
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <nav class="navbar navbar-expand-lg navbar-light navigation">
+                <a class="navbar-brand" href="index.html">
+                    <img src="SS logo.PNG" alt="logo" width="100px" height="70px" style = "position:relative; left:5px; top:-3px;">
+                </a>
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+                 aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                    <ul class="navbar-nav ml-auto main-nav ">
+                        <li class="nav-item active">
+                            <a class="nav-link" href="index.html">Home</a>
+                        </li>
+                        <li class="nav-item dropdown dropdown-slide">
+                            <a class="nav-link dropdown-toggle" href="profile.html">View My Listings<span></span>
+                            </a>
+                        </li>
+                        <li class="nav-item dropdown dropdown-slide">
+                            <a class="nav-link dropdown-toggle" href="category.html"  aria-haspopup="true" aria-expanded="false">
+                                View All Listings <span></span>
+                            </a>
+                        </li>
+                        <li class="nav-item dropdown dropdown-slide">
+                            <a class="nav-link dropdown-toggle" href="post_listing.html"  aria-haspopup="true" aria-expanded="false">
+                                Add Listing<span></span>
+                            </a>
+                        </li>
+                    </ul>
+                    <ul class="navbar-nav ml-auto mt-10">
+                        <li class="nav-item">
+                            <div class="dropdown">
+                                <img src="profilepic.png" width="35px;">
+                                <span style="font-weight:bold;padding-top:10px;padding-left:10px;" id="greeting"></span>
+                                <div class="dropdown-content">
+                                    <a href="profile.html">Profile</a>
+                                    <a style="color:red;" onclick="signout()">Log Out</a>
+                                </div>
+                            </div>
+                            <script type="text/javascript">
+                                let name = sessionStorage.getItem("uname");
+                                document.getElementById("greeting").innerHTML = name;
+                            </script>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+    </div>
+</div>
+</section>
+
+<section class="ad-post bg-gray py-5">
+    <div class="container">
+        <h1 style="text-align:center">Check Out</h1><br>
+        <form method="POST" action="#">
+            <!-- Post Your ad start -->
+            <fieldset class="border border-gary p-4 mb-5">
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <h6 class="font-weight-bold pt-4 pb-1">Title Of Listing:</h6> <span id="listingname"></span>
+                            <h6 class="font-weight-bold pt-4 pb-1">Quantity Selected:</h6> <span id="qtyselected"></span>
+                        </div>
+                        <div class="col-lg-6">
+                            <h6 class="font-weight-bold pt-4 pb-1">Unit Price:</h6><span id="price"></span>
+                            <div class="price">
+                                <h6 class="font-weight-bold pt-4 pb-1">Your Contact Number:</h6>
+                                <div class="row px-3">
+                                    <div class="col-lg-4 mr-lg-4 rounded bg-white my-2 ">
+                                        <input type="text" class="border-0 py-2 w-100 price" id="phone">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+            </fieldset>
+            <!-- seller-information start -->
+            <fieldset class="border p-4 my-5 seller-information bg-gray">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <h3>Seller Information</h3>
+                    </div>
+                    <div class="col-lg-6">
+                        <h6 class="font-weight-bold pt-4 pb-1">Contact Name:</h6> <span id="sellername"></span><span id="selleremail" hidden></span>
+                        <h6 class="font-weight-bold pt-4 pb-1">Collection location:</h6> <span id="location"></span>
+                    </div>
+                    <div class="col-lg-6">
+                        <h6 class="font-weight-bold pt-4 pb-1">Contact Number:</h6> <span id="sellernumber"></span>
+                    </div>
+                </div>
+            </fieldset>
+            <!-- seller-information end-->
+            <div style="width: 100%; height: 20px; border-bottom: 2px solid black; text-align: center">
+                <span style="font-size: 25px; background-color: #F3F5F6; padding: 0 5px;">
+                    &nbsp; Check Out Methods &nbsp;
+                </span>
+            </div>
+            <div class="row justify-content-center">
+                <div class="col-4 p-3" style="text-align:center;"><br><br>
+                    <button type="submit" hidden>Contact Seller Directly</button>
+                    <button type="button" class="btn btn-primary w-75" onclick="processorder()">Contact Seller Directly</button>
+                </div>
+                <div class="col-4 p-3" style="text-align:center;"><br><br>
+                    <div id="google_button"></div>
+                </div>
+            </div>
+        </form>
+    </div>
+</section>
+<script type="text/javascript">
+    function processorder() {
+        let jwt_token = sessionStorage.getItem("jwt");
+        let selleremail = document.getElementById('selleremail').innerText;
+        let payload = JSON.parse(atob(jwt_token.split('.')[1]));
+        let myemail = payload['sub'];
+        let queryDict = {};
+        location.search.substr(1).split("&").forEach(function(item) {queryDict[item.split("=")[0]] = item.split("=")[1]});
+        let lid = queryDict['lid'];
+        let buyqty = queryDict['qty'];
+        let mycontact = document.getElementById("phone").value;
+        let price = document.getElementById("price").innerText;
+
+        let url = "http://localhost:5009/place_order";
+        axios.post(url, {
+            "paymentToken": "",
+            "selleremail": selleremail,
+            "buyeremail": myemail,
+            "buyqty": buyqty,
+            "price": price,
+            "buyerphone": mycontact,
+            "listing_id": lid,
+            "jwt_token": jwt_token,
+            "googlepay": false
+        })
+        .then(response => {
+            let data = response.data;
+            if (data.code == 200) {
+                alert("successful!, redirecting to Home page");
+                window.location.replace("index.html");
+            }
+            else {
+                alert("An error occurred!!! \n" + data.message);
+            }
+        })
+        .catch(error => {
+            alert("An error occurred!!! \n" + error);
+        });
+    }
+
+    let queryDict = {};
+    location.search.substr(1).split("&").forEach(function(item) {queryDict[item.split("=")[0]] = item.split("=")[1]});
+    var lid = queryDict['lid'];
+    var qty = queryDict['qty'];
+    let url = "http://localhost:5000/listing/" + lid;
+    axios.get(url)
+    .then(response => {
+        let data = response.data.data;
+        document.getElementById("listingname").innerHTML = data['productName'];
+        document.getElementById('price').innerText = data['price'];
+        document.getElementById("location").innerHTML = data['location'];
+        document.getElementById("sellernumber").innerHTML = data['phoneNumber'];
+        document.getElementById("sellername").innerHTML = data['sellername'];
+        document.getElementById("selleremail").innerText = data['selleremail'];
+        document.getElementById('qtyselected').innerText = qty;
+    })
+    .catch(error => {
+        alert("An error occurred!!! \n" + error);
+    });
+
+</script>
+
+<!-- Footer Bottom -->
+<footer class="footer-bottom">
+  <!-- Container Start -->
+  <div class="container">
+      <div class="row">
+          <div class="col-sm-6 col-12">
+              <!-- Copyright -->
+              <div class="copyright">
+                  <p>Copyright © <script>
+                  var CurrentYear = new Date().getFullYear()
+                  document.write(CurrentYear)
+              </script>. All Rights Reserved</a></p>
+          </div>
+      </div>
+      <!-- To Top -->
+      <div class="top-to">
+          <a id="top" class="" href="#"><i class="fa fa-angle-up"></i></a>
+      </div>
+</footer>
+
+<!-- JAVASCRIPTS -->
+<script src="plugins/jQuery/jquery.min.js"></script>
+<script src="plugins/bootstrap/js/popper.min.js"></script>
+<script src="plugins/bootstrap/js/bootstrap.min.js"></script>
+<script src="plugins/bootstrap/js/bootstrap-slider.js"></script>
+  <!-- tether js -->
+<script src="plugins/tether/js/tether.min.js"></script>
+<script src="plugins/raty/jquery.raty-fa.js"></script>
+<script src="plugins/slick-carousel/slick/slick.min.js"></script>
+<script src="plugins/jquery-nice-select/js/jquery.nice-select.min.js"></script>
+<script src="plugins/fancybox/jquery.fancybox.pack.js"></script>
+<script src="plugins/smoothscroll/SmoothScroll.min.js"></script>
+<!-- google map -->
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCcABaamniA6OL5YvYSpB3pFMNrXwXnLwU&libraries=places"></script>
+<script src="plugins/google-map/gmap.js"></script>
+<script src="js/script.js"></script>
+</body>
+</html>

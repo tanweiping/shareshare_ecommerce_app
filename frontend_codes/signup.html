@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<head>
+<meta charset="UTF-8">
+<meta name="google-signin-client_id" content="1098783399063-n68jhe1kmf1vhjonp5mjp0im0d5n1oha.apps.googleusercontent.com">
+<title>Homepage.html</title>
+<link rel="stylesheet" type="text/css" href="./signup.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<style>
+	.fa-facebook {
+		background: #3B5998;
+		color: white;
+	}
+</style>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+</head>
+<body>
+	<script src="https://apis.google.com/js/platform.js?onload=renderButton" async defer></script>
+	<script type="text/javascript">
+	function renderButton() {
+	 	gapi.signin2.render('my-signin2', {
+			'scope': 'profile email',
+			'width': 240,
+			'height': 50,
+			'longtitle': true,
+			'theme': 'dark',
+			'onsuccess': onSuccess,
+			'onfailure': onFailure
+	  	});
+	}
+	function onSuccess(googleUser) {
+		var token = googleUser.getAuthResponse().id_token;
+		var url = "http://127.0.0.1:8000/graphql";
+		var gql_query = `mutation {googleSignin(gtoken: \"${token}\") {status, token, message}}`;
+		axios.post(url, {
+			query: gql_query
+		})
+		.then(response => {
+			let data = response.data
+			if (data.data.googleSignin.status) {
+				jwt = data.data.googleSignin.token   // the jwt returned from server
+				jwt_payload = JSON.parse(atob(jwt.split('.')[1]));   // decode the jwt payload
+				sessionStorage.setItem("uname", jwt_payload.name);
+				sessionStorage.setItem("jwt", jwt);
+				window.location.replace("index.html");
+			}
+			else {
+				alert("An error occurred, login failed!!! \n" + data.data.googleSignin.message);
+			}
+		})
+		.catch(error => {
+			alert("An error occurred, login failed!!! \n" + error);
+		});
+	}
+	function onFailure(error) {
+	  	console.log(error);
+	}
+	</script>
+	<div class="container" id="container">
+		<div class="form-container sign-up-container">
+			<form>
+				<h1><img src="./SS logo.PNG" alt="logo" width="60" height="40" style = "position:absolute; left:20px; top:20px;">Create Account</h1>
+				<input id="s_name" type="text" placeholder="Name" />
+				<input id="s_email" type="email" placeholder="Email" />
+				<input id="s_passwd" type="password" placeholder="Password" />
+				<button hidden>Sign Up</button>
+				<button type="button" onclick="process_signup()">Sign Up</button>
+			</form>
+		</div>
+		<div class="form-container sign-in-container">
+			<form>
+				<h1><img src="./SS logo.PNG" alt="logo" width="60" height="40" style = "position:absolute; left:20px; top:20px;">Sign in </h1>
+				<input id="l_email" type="email" placeholder="Email" />
+				<input id="l_passwd" type="password" placeholder="Password" />
+				<a href="#">Forgot your password?</a>
+				<button hidden>Sign In</button>
+				<button type="button" onclick="process_login()">Sign In</button>
+				<div class="social-container">
+					<hr>
+					<div id="my-signin2">
+					</div>
+				</div>
+			</form>
+		</div>
+		<div class="overlay-container">
+			<div class="overlay">
+				<div class="overlay-panel overlay-left">
+					<h1>Welcome Back!</h1>
+					<p>To keep connected with us please login with your personal info</p>
+					<button class="ghost" id="signIn">Sign In</button>
+				</div>
+				<div class="overlay-panel overlay-right">
+					<h1>New to Share Share?</h1>
+					<p>Sign up now to enjoy great deal and convenience by sharing!</p>
+					<button class="ghost" id="signUp">Sign Up</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+
+<script>
+    const signUpButton = document.getElementById('signUp');
+    const signInButton = document.getElementById('signIn');
+    const container = document.getElementById('container');
+
+    signUpButton.addEventListener('click', () => {
+        container.classList.add("right-panel-active");
+    });
+
+    signInButton.addEventListener('click', () => {
+        container.classList.remove("right-panel-active");
+    });
+
+	function process_signup() {
+		let name = document.getElementById("s_name").value;
+		let email = document.getElementById("s_email").value;
+		let pw = document.getElementById("s_passwd").value;
+		let url = "http://127.0.0.1:8000/graphql";
+		let gql_query = `mutation {createAccount(fullname: \"${name}\", passwd: \"${pw}\", email: \"${email}\") {status, token, message}}`;
+		axios.post(url, {
+			query: gql_query
+		})
+		.then(response => {
+			let data = response.data
+			if (data.data.createAccount.status === true) {
+				jwt = data.data.createAccount.token   // the jwt returned from server
+				jwt_payload = JSON.parse(atob(jwt.split('.')[1]));   // decode the jwt payload
+				sessionStorage.setItem("uname", jwt_payload.name);
+				sessionStorage.setItem("jwt", jwt);
+				window.location.replace("index.html");
+			}
+			else {
+				alert("An error occurred, create account failed!!! \n" + data.data.createAccount.message);
+			}
+		})
+		.catch(error => {
+			alert("An error occurred, create account failed!!! \n" + error);
+		});
+	}
+
+	function process_login() {
+		let email = document.getElementById("l_email").value;
+		let pw = document.getElementById("l_passwd").value;
+		let url = "http://127.0.0.1:8000/graphql";
+		let gql_query = `mutation {normalSignin(email: \"${email}\", passwd: \"${pw}\") {status, token, message}}`;
+		axios.post(url, {
+			query: gql_query
+		})
+		.then(response => {
+			let data = response.data
+			if (data.data.normalSignin.status === true) {
+				jwt = data.data.normalSignin.token   // the jwt returned from server
+				jwt_payload = JSON.parse(atob(jwt.split('.')[1]));   // decode the jwt payload
+				sessionStorage.setItem("uname", jwt_payload.name);
+				sessionStorage.setItem("jwt", jwt);
+				window.location.replace("index.html");
+			}
+			else {
+				alert("An error occurred, login failed!!! \n" + data.data.normalSignin.message);
+			}
+		})
+		.catch(error => {
+			alert("An error occurred, login failed!!! \n" + error);
+		});
+	}
+
+</script>
+
+</body>
+</html>
