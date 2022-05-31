@@ -13,7 +13,7 @@ This platform facilitates 3 main user scenarios:
 * User makes a listing
 * User places an order
 
-## Steps to run the solution:
+## Steps to run the solution
 
 
 ```bash
