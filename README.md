@@ -24,3 +24,9 @@ This platform facilitates 3 main user scenarios:
 5. Access the app using your browser, by entering the route you have place the folder frontend_codes in
 
 ```
+
+## Author
+🙋‍♀️ Wei Ping
+✉️ weiping.tan.2020@scis.smu.edu.sg
+🇮🇳 https://www.linkedin.com/in/tan-wei-ping-81013118b/
+Git [@weiping](https://github.com/tanweiping)
