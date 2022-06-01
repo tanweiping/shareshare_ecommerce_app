@@ -28,5 +28,5 @@ This platform facilitates 3 main user scenarios:
 ## Author
 🙋‍♀️ Wei Ping<br />
 ✉️ weiping.tan.2020@scis.smu.edu.sg <br />
-🇮🇳 https://www.linkedin.com/in/tan-wei-ping-81013118b/ <br />
+🇮🇳  https://www.linkedin.com/in/tan-wei-ping-81013118b/ <br />
 Git [@weiping](https://github.com/tanweiping) <br />
